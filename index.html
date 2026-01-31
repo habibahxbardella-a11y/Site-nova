@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Recrutement | NovaWorld</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="admin-access">
+            <button onclick="goToAdmin()" class="btn-mini">Accès Staff</button>
+        </div>
+        <h1>Nova<span>World</span> Staff</h1>
+    </header>
+
+    <div class="container">
+        <h2 style="text-align:center; color: #ffff00; text-shadow: 0 0 10px #ffff00;">Formulaire de Recrutement</h2>
+        
+        <form id="formCandidature">
+            <h3 class="section-title">Présentation IRL</h3>
+            <div class="input-row" style="display:flex; gap:15px;">
+                <div class="input-group" style="flex:2;">
+                    <label>Prénom</label>
+                    <input type="text" id="prenom" required>
+                </div>
+                <div class="input-group" style="flex:1;">
+                    <label>Âge</label>
+                    <input type="number" id="age" required>
+                </div>
+            </div>
+
+            <h3 class="section-title">Identifiants Discord</h3>
+            <div class="input-group">
+                <label>Pseudo Discord</label>
+                <input type="text" id="discordTag" placeholder="Sacha#0001" required>
+            </div>
+            <div class="input-group">
+                <label>ID Discord</label>
+                <input type="text" id="discordId" placeholder="283910293810293" required>
+            </div>
+
+            <h3 class="section-title">Poste & Expérience</h3>
+            <div class="input-group">
+                <label>Poste visé</label>
+                <select id="role" required>
+                    <option value="" disabled selected>Sélectionnez un grade...</option>
+                    <option value="Helpeur">Helpeur</option>
+                    <option value="Modérateur">Modérateur</option>
+                    <option value="Gérant Staff">Gérant staff</option>
+                    <option value="Gérant Légal">Gérant legal</option>
+                    <option value="Gérant Illégal">Gérant illegal</option>
+                    <option value="Gérant Global">Gérant global</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Expérience Staff</label>
+                <select id="experienceStaff" required>
+                    <option value="" disabled selected>Avez-vous déjà eu de l'expérience ?</option>
+                    <option value="Oui">Oui, j'ai déjà de l'expérience</option>
+                    <option value="Non">Non, je n'en ai pas</option>
+                    <option value="Débutant">Je suis débutant mais très motivé</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Détaillez vos anciens projets</label>
+                <textarea id="experienceDetail" rows="3" placeholder="Serveurs, grades occupés..."></textarea>
+            </div>
+
+            <h3 class="section-title">Motivations</h3>
+            <div class="input-group">
+                <label>Pourquoi vous ?</label>
+                <textarea id="motivation" rows="5" placeholder="Développez vos motivations..." required></textarea>
+            </div>
+
+            <div class="input-group">
+                <label>Vos disponibilités</label>
+                <input type="text" id="dispo" placeholder="Ex: Semaine 18h-23h / WE Libre" required>
+            </div>
+
+            <button type="submit" class="btn">Soumettre ma candidature</button>
+        </form>
+    </div>
+
+    <script>
+        function goToAdmin() {
+            const code = prompt("Code d'accès Staff :");
+            if (code === "1993") window.location.href = "admin.html";
+            else if (code !== null) alert("Accès refusé.");
+        }
+
+        document.getElementById('formCandidature').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const candidature = {
+                id: Date.now(),
+                discordTag: document.getElementById('discordTag').value,
+                discordId: document.getElementById('discordId').value,
+                prenom: document.getElementById('prenom').value,
+                age: document.getElementById('age').value,
+                role: document.getElementById('role').value,
+                experienceStaff: document.getElementById('experienceStaff').value,
+                experienceDetail: document.getElementById('experienceDetail').value,
+                motivation: document.getElementById('motivation').value,
+                dispo: document.getElementById('dispo').value,
+                status: 'En attente'
+            };
+
+            let apps = JSON.parse(localStorage.getItem('novaApps') || '[]');
+            apps.push(candidature);
+            localStorage.setItem('novaApps', JSON.stringify(apps));
+
+            alert("Candidature envoyée !");
+            window.location.reload();
+        });
+    </script>
+</body>
+</html>

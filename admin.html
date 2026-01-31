@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Administration | NovaWorld</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Styles pour les onglets */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .tab-btn {
+            background: #111;
+            color: white;
+            border: 1px solid var(--primary);
+            padding: 10px 25px;
+            cursor: pointer;
+            transition: 0.3s;
+            border-radius: 5px;
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            box-shadow: var(--glow);
+            color: black;
+            font-weight: bold;
+        }
+        .hidden { display: none; }
+        
+        /* Couleur spécifique pour le texte accepté */
+        .status-accepted {
+            color: #00ff00;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: 1px solid #00ff00;
+            padding: 5px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loginOverlay" class="overlay">
+        <div class="container" style="text-align:center; max-width: 400px;">
+            <h2 style="color:var(--primary);">ACCÈS RESTREINT</h2>
+            <input type="password" id="passCode" placeholder="Code d'accès" style="text-align:center; font-size: 1.2rem;">
+            <button onclick="checkCode()" class="btn" style="margin-top:20px;">ENTRER</button>
+        </div>
+    </div>
+
+    <header>
+        <h1>Gestion <span>Candidatures</span></h1>
+        <div style="margin-top: 10px;">
+            <a href="index.html" style="color: white; text-decoration: none; border: 1px solid white; padding: 5px 10px; border-radius: 5px;">← Retour Site</a>
+        </div>
+    </header>
+
+    <div class="container" id="adminContent">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('pending')">EN ATTENTE</button>
+            <button class="tab-btn" onclick="switchTab('accepted')">LISTE DES RECRUTÉS</button>
+        </div>
+
+        <div id="pendingList"></div>
+
+        <div id="acceptedList" class="hidden"></div>
+    </div>
+
+    <script>
+        let currentTab = 'pending';
+
+        function checkCode() {
+            const code = document.getElementById('passCode').value;
+            if (code === "1993") {
+                document.getElementById('loginOverlay').style.display = 'none';
+                loadApps();
+            } else {
+                alert("Code Incorrect !");
+            }
+        }
+
+        // Fonction pour changer d'onglet
+        function switchTab(tab) {
+            currentTab = tab;
+            // Gestion des boutons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Gestion de l'affichage
+            if (tab === 'pending') {
+                document.getElementById('pendingList').classList.remove('hidden');
+                document.getElementById('acceptedList').classList.add('hidden');
+            } else {
+                document.getElementById('pendingList').classList.add('hidden');
+                document.getElementById('acceptedList').classList.remove('hidden');
+            }
+            loadApps();
+        }
+
+        function loadApps() {
+            const pendingContainer = document.getElementById('pendingList');
+            const acceptedContainer = document.getElementById('acceptedList');
+            const apps = JSON.parse(localStorage.getItem('novaApps') || '[]');
+            
+            pendingContainer.innerHTML = "";
+            acceptedContainer.innerHTML = "";
+
+            let pendingCount = 0;
+            let acceptedCount = 0;
+
+            apps.forEach((app, index) => {
+                // Construction du HTML de base
+                const baseHtml = `
+                    <div class="app-card" style="border-color: ${app.status === 'accept' ? '#00ff00' : 'var(--primary)'}">
+                        <h3>${app.discordTag} <span style="font-size:0.8rem; color:#888;">(${app.role})</span></h3>
+                        <p><strong>Prénom/Âge:</strong> ${app.prenom} (${app.age} ans)</p>
+                        <p><strong>Expérience:</strong> ${app.experienceStaff} - ${app.experienceDetail || 'Aucun détail'}</p>
+                        <p><strong>Motivations:</strong> ${app.motivation}</p>
+                        <p><strong>Dispos:</strong> ${app.dispo}</p>
+                `;
+
+                if (app.status === 'En attente') {
+                    pendingCount++;
+                    pendingContainer.innerHTML += baseHtml + `
+                        <div class="actions">
+                            <button class="btn btn-accept" onclick="processApp(${index}, 'accept', '${app.discordId}')">ACCEPTER</button>
+                            <button class="btn btn-refuse" onclick="processApp(${index}, 'refuse', '${app.discordId}')">REFUSER</button>
+                        </div>
+                    </div>`;
+                } else if (app.status === 'accept') {
+                    acceptedCount++;
+                    acceptedContainer.innerHTML += baseHtml + `
+                        <div class="status-accepted">Membre Recruté ✅</div>
+                    </div>`;
+                }
+            });
+
+            if(pendingCount === 0) pendingContainer.innerHTML = "<p style='text-align:center'>Aucune candidature en attente.</p>";
+            if(acceptedCount === 0) acceptedContainer.innerHTML = "<p style='text-align:center'>Aucun membre dans la liste des recrutés.</p>";
+        }
+
+        async function processApp(index, decision, discordId) {
+            let apps = JSON.parse(localStorage.getItem('novaApps'));
+            apps[index].status = decision; // On stocke 'accept' ou 'refuse'
+            localStorage.setItem('novaApps', JSON.stringify(apps));
+
+            loadApps(); // Recharge les listes immédiatement
+
+            try {
+                await fetch('http://localhost:3000/api/decision', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: discordId, status: decision })
+                });
+                alert(`Candidat ${decision === 'accept' ? 'Accepté' : 'Refusé'} !`);
+            } catch (e) {
+                console.error(e);
+                alert("Erreur de connexion avec le bot.");
+            }
+        }
+    </script>
+</body>
+</html>
